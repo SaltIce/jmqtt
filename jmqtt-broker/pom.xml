@@ -5,13 +5,12 @@
     <parent>
         <artifactId>jmqtt</artifactId>
         <groupId>org.jmqtt</groupId>
-        <version>1.1.0</version>
+        <version>3.0.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.jmqtt</groupId>
     <artifactId>jmqtt-broker</artifactId>
-    <version>1.1.0</version>
+    <version>3.0.0</version>
 
     <name>jmqtt-broker</name>
 
@@ -23,17 +22,20 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.jmqtt</groupId>
-            <artifactId>jmqtt-common</artifactId>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-all</artifactId>
         </dependency>
+
         <dependency>
-            <groupId>org.jmqtt</groupId>
-            <artifactId>jmqtt-remoting</artifactId>
+            <groupId>org.mybatis</groupId>
+            <artifactId>mybatis</artifactId>
         </dependency>
+
         <dependency>
-            <groupId>org.jmqtt</groupId>
-            <artifactId>jmqtt-store</artifactId>
+            <groupId>com.alibaba</groupId>
+            <artifactId>druid</artifactId>
         </dependency>
+
     </dependencies>
 
 </project>
