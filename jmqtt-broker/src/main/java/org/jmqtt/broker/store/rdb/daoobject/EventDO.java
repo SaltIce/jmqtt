@@ -1,7 +1,6 @@
 package org.jmqtt.broker.store.rdb.daoobject;
 
 import java.io.Serializable;
-import java.util.Date;
 
 public class EventDO implements Serializable {
 
@@ -11,11 +10,11 @@ public class EventDO implements Serializable {
 
     private String content;
 
-    private Date gmtCreate;
+    private Long gmtCreate;
 
     private String jmqttIp;
 
-    private String eventCode;
+    private Integer eventCode;
 
     public Long getId() {
         return id;
@@ -33,11 +32,11 @@ public class EventDO implements Serializable {
         this.content = content;
     }
 
-    public Date getGmtCreate() {
+    public Long getGmtCreate() {
         return gmtCreate;
     }
 
-    public void setGmtCreate(Date gmtCreate) {
+    public void setGmtCreate(Long gmtCreate) {
         this.gmtCreate = gmtCreate;
     }
 
@@ -49,11 +48,11 @@ public class EventDO implements Serializable {
         this.jmqttIp = jmqttIp;
     }
 
-    public String getEventCode() {
+    public Integer getEventCode() {
         return eventCode;
     }
 
-    public void setEventCode(String eventCode) {
+    public void setEventCode(Integer eventCode) {
         this.eventCode = eventCode;
     }
 }

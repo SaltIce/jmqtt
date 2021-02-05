@@ -11,6 +11,7 @@ import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.Properties;
 import java.util.zip.Deflater;
 import java.util.zip.DeflaterOutputStream;
@@ -19,7 +20,7 @@ import java.util.zip.InflaterInputStream;
 
 public class MixAll {
 
-    public static String MQTT_VERSION_SUPPORT = "mqtt, mqttv3.1, mqttv3.1.1";
+    public static String MQTT_VERSION_SUPPORT = "mqttv3.1.1";
 
     public static boolean createIfNotExistsDir(File file) {
         return file != null && (file.exists() ? file.isDirectory() : file.mkdirs());
@@ -28,6 +29,26 @@ public class MixAll {
     public static String dateFormater(long time) {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         return dateFormat.format(time);
+    }
+
+
+    public static <T> T pluginInit(String classFullName){
+        try {
+            Class<?> clazz = Class.forName(classFullName);
+            return (T) clazz.newInstance();
+        } catch (Exception e) {
+            System.err.println("Load class and init error," + e);
+            System.exit(-1);
+        }
+        return null;
+    }
+
+
+    public static boolean isEmpty(Collection collection) {
+        if (collection == null || collection.size() == 0) {
+            return true;
+        }
+        return false;
     }
 
     public static String getLocalIp(){

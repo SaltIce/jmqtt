@@ -7,7 +7,7 @@ import io.netty.handler.codec.mqtt.MqttPublishMessage;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.util.ReferenceCountUtil;
 import org.jmqtt.broker.BrokerController;
-import org.jmqtt.broker.acl.PubSubPermission;
+import org.jmqtt.broker.acl.AuthValid;
 import org.jmqtt.broker.common.log.LoggerName;
 import org.jmqtt.broker.common.model.Message;
 import org.jmqtt.broker.common.model.MessageHeader;
@@ -16,7 +16,6 @@ import org.jmqtt.broker.remoting.session.ClientSession;
 import org.jmqtt.broker.remoting.session.ConnectManager;
 import org.jmqtt.broker.remoting.util.MessageUtil;
 import org.jmqtt.broker.remoting.util.NettyUtil;
-import org.jmqtt.broker.store.SessionStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,14 +29,11 @@ import java.util.Map;
 public class PublishProcessor extends AbstractMessageProcessor implements RequestProcessor {
     private Logger log = LoggerFactory.getLogger(LoggerName.MESSAGE_TRACE);
 
-    private PubSubPermission pubSubPermission;
-
-    private SessionStore sessionStore;
+    private AuthValid authValid;
 
     public PublishProcessor(BrokerController controller){
-        super(controller.getMessageStore());
-        this.sessionStore = controller.getSessionStore();
-        this.pubSubPermission = controller.getPubSubPermission();
+        super(controller);
+        this.authValid = controller.getAuthValid();
     }
 
     @Override
@@ -49,7 +45,7 @@ public class PublishProcessor extends AbstractMessageProcessor implements Reques
             String clientId = NettyUtil.getClientId(ctx.channel());
             ClientSession clientSession = ConnectManager.getInstance().getClient(clientId);
             String topic = publishMessage.variableHeader().topicName();
-            if(!this.pubSubPermission.publishVerify(clientId,topic)){
+            if(!this.authValid.publishVerify(clientId,topic)){
                 log.warn("[PubMessage] permission is not allowed");
                 clientSession.getCtx().close();
                 return;
@@ -87,7 +83,7 @@ public class PublishProcessor extends AbstractMessageProcessor implements Reques
     private void processQos2(ChannelHandlerContext ctx, Message innerMsg) {
         int originMessageId = innerMsg.getMsgId();
         log.debug("[PubMessage] -> Process qos2 message,clientId={}", innerMsg.getClientId());
-        boolean flag = sessionStore.cacheInflowMsg(innerMsg.getClientId(), innerMsg);
+        boolean flag = cacheInflowMsg(innerMsg.getClientId(), innerMsg);
         if (!flag) {
             log.warn("[PubMessage] -> cache qos2 pub message failure,clientId={}", innerMsg.getClientId());
         }
