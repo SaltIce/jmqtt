@@ -1,5 +1,6 @@
 package org.jmqtt.broker.common.helper;
 
+import org.jmqtt.broker.common.log.LogUtil;
 import org.slf4j.Logger;
 
 import java.io.ByteArrayInputStream;
@@ -20,7 +21,7 @@ import java.util.zip.InflaterInputStream;
 
 public class MixAll {
 
-    public static String MQTT_VERSION_SUPPORT = "mqttv3.1.1";
+    public static String MQTT_VERSION_SUPPORT = "mqtt,mqtt3.1,mqttv3.1.1";
 
     public static boolean createIfNotExistsDir(File file) {
         return file != null && (file.exists() ? file.isDirectory() : file.mkdirs());
@@ -131,7 +132,7 @@ public class MixAll {
                     field.setAccessible(true);
                     String key = field.getName();
                     Object value = field.get(obj);
-                    log.info("{} = {}", key, value);
+                    LogUtil.info(log,"{} = {}", key, value);
                 } catch (IllegalAccessException e) {
                     e.printStackTrace();
                 }

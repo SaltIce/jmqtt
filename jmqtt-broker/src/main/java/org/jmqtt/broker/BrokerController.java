@@ -8,7 +8,8 @@ import org.jmqtt.broker.common.config.NettyConfig;
 import org.jmqtt.broker.common.helper.MixAll;
 import org.jmqtt.broker.common.helper.RejectHandler;
 import org.jmqtt.broker.common.helper.ThreadFactoryImpl;
-import org.jmqtt.broker.common.log.LoggerName;
+import org.jmqtt.broker.common.log.JmqttLogger;
+import org.jmqtt.broker.common.log.LogUtil;
 import org.jmqtt.broker.processor.RequestProcessor;
 import org.jmqtt.broker.processor.dispatcher.ClusterEventHandler;
 import org.jmqtt.broker.processor.dispatcher.DefaultDispatcherInnerMessage;
@@ -20,10 +21,12 @@ import org.jmqtt.broker.remoting.netty.ChannelEventListener;
 import org.jmqtt.broker.remoting.netty.NettyRemotingServer;
 import org.jmqtt.broker.store.MessageStore;
 import org.jmqtt.broker.store.SessionStore;
+import org.jmqtt.broker.store.highperformance.InflowMessageHandler;
+import org.jmqtt.broker.store.highperformance.OutflowMessageHandler;
+import org.jmqtt.broker.store.highperformance.OutflowSecMessageHandler;
 import org.jmqtt.broker.subscribe.DefaultSubscriptionTreeMatcher;
 import org.jmqtt.broker.subscribe.SubscriptionMatcher;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -35,7 +38,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class BrokerController {
 
-    private static final Logger log = LoggerFactory.getLogger(LoggerName.BROKER);
+    private static final Logger log = JmqttLogger.brokerlog;
 
     private BrokerConfig brokerConfig;
     private NettyConfig nettyConfig;
@@ -61,7 +64,12 @@ public class BrokerController {
     private MessageStore           messageStore;
     private ClusterEventHandler clusterEventHandler;
     private EventConsumeHandler eventConsumeHandler;
+    private String currentIp;
 
+    // high performance message handle
+    private InflowMessageHandler     inflowMessageHandler;
+    private OutflowMessageHandler    outflowMessageHandler;
+    private OutflowSecMessageHandler outflowSecMessageHandler;
 
     public BrokerController(BrokerConfig brokerConfig, NettyConfig nettyConfig) {
         this.brokerConfig = brokerConfig;
@@ -71,6 +79,7 @@ public class BrokerController {
         this.pubQueue = new LinkedBlockingQueue<>(100000);
         this.subQueue = new LinkedBlockingQueue<>(100000);
         this.pingQueue = new LinkedBlockingQueue<>(10000);
+        this.currentIp = MixAll.getLocalIp();
 
         {
             // 会话状态，消息存储加载，可自己实现相关的类
@@ -84,9 +93,14 @@ public class BrokerController {
             this.clusterEventHandler = MixAll.pluginInit(brokerConfig.getClusterEventHandlerClass());
         }
 
-        this.eventConsumeHandler = new EventConsumeHandler(this);
+        // high performance message handler
+        this.inflowMessageHandler = new InflowMessageHandler();
+        this.outflowMessageHandler = new OutflowMessageHandler();
+        this.outflowSecMessageHandler = new OutflowSecMessageHandler();
+
         this.subscriptionMatcher = new DefaultSubscriptionTreeMatcher();
         this.innerMessageDispatcher = new DefaultDispatcherInnerMessage(this);
+        this.eventConsumeHandler = new EventConsumeHandler(this);
 
         this.channelEventListener = new ClientLifeCycleHookService(messageStore, innerMessageDispatcher);
         this.remotingServer = new NettyRemotingServer(brokerConfig, nettyConfig, channelEventListener);
@@ -121,10 +135,6 @@ public class BrokerController {
                 pingQueue,
                 new ThreadFactoryImpl("PingThread"),
                 new RejectHandler("heartbeat", 100000));
-
-        {
-
-        }
 
     }
 
@@ -185,7 +195,7 @@ public class BrokerController {
         if (this.remotingServer != null) {
             this.remotingServer.start();
         }
-        log.info("JMqtt Server start success and version = {}", brokerConfig.getVersion());
+        LogUtil.info(log,"JMqtt Server start success and version = {}", brokerConfig.getVersion());
     }
 
     public void shutdown() {
@@ -307,5 +317,25 @@ public class BrokerController {
 
     public void setClusterEventHandler(ClusterEventHandler clusterEventHandler) {
         this.clusterEventHandler = clusterEventHandler;
+    }
+
+    public String getCurrentIp() {
+        return currentIp;
+    }
+
+    public EventConsumeHandler getEventConsumeHandler() {
+        return eventConsumeHandler;
+    }
+
+    public InflowMessageHandler getInflowMessageHandler() {
+        return inflowMessageHandler;
+    }
+
+    public OutflowMessageHandler getOutflowMessageHandler() {
+        return outflowMessageHandler;
+    }
+
+    public OutflowSecMessageHandler getOutflowSecMessageHandler() {
+        return outflowSecMessageHandler;
     }
 }

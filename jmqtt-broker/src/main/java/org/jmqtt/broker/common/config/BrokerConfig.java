@@ -7,6 +7,7 @@ public class BrokerConfig {
     // 配置conf文件的所在位置，logback，properties文件等所在位置
     private String jmqttHome = System.getenv("JMQTT_HOME") != null ? System.getenv("JMQTT_HOME") : System.getProperty("user.dir") +
             File.separator + "jmqtt-broker" + File.separator + "src" + File.separator + "main" + File.separator + "resources";
+    private String logLevel = "INFO";
 
     private String  version         = "3.0.0";
     private boolean anonymousEnable = true;
@@ -44,7 +45,7 @@ public class BrokerConfig {
     private String password = "123456";
 
     // 是否启用高性能模式，高性能模式下：入栈消息，出栈消息等过程消息都会默认采用内存缓存，若为false，则会用具体实现的存储缓存这一阶段的消息
-    private boolean highPerformance = false;
+    private boolean highPerformance = true;
 
     public String getRedisHost() {
         return redisHost;
@@ -240,5 +241,13 @@ public class BrokerConfig {
 
     public void setClusterMode(int clusterMode) {
         this.clusterMode = clusterMode;
+    }
+
+    public String getLogLevel() {
+        return logLevel;
+    }
+
+    public void setLogLevel(String logLevel) {
+        this.logLevel = logLevel;
     }
 }
