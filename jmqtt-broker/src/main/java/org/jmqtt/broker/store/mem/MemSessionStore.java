@@ -23,7 +23,7 @@ public class MemSessionStore extends AbstractMemStore implements SessionStore {
      * 离线消息
      */
     private Map<String,/*clientId*/ BlockingQueue<Message>> offlineTable = new ConcurrentHashMap<>();
-    // 离线消息最大数量
+    // 离线消息最大数量，暂未考虑设置
     private int msgMaxNum = 1000;
     /**
      * 过程消息
@@ -63,16 +63,8 @@ public class MemSessionStore extends AbstractMemStore implements SessionStore {
 
     @Override
     public boolean storeSession(String clientId, SessionState sessionState) {
-        // notifyClearOtherSession在单机模式是无用的
         sessionTable.put(clientId,sessionState);
         return true;
-    }
-
-    @Override
-    public void clearSession(String clientId, boolean clearOfflineMsg) {
-        sessionTable.remove(clientId);
-        if (clearOfflineMsg)
-            offlineTable.remove(clientId);
     }
 
     @Override
@@ -117,10 +109,12 @@ public class MemSessionStore extends AbstractMemStore implements SessionStore {
     public boolean cacheInflowMsg(String clientId, Message message) {
         ConcurrentHashMap<Integer,Message> v =  recCache.get(clientId);
         if(v == null){
-            v = new ConcurrentHashMap<>(16);
+            v = new ConcurrentHashMap<>();
+            v.put(message.getMsgId(),message);
+            recCache.put(clientId,v);
+        }else{
+            v.put(message.getMsgId(),message);
         }
-        v.put(message.getMsgId(),message);
-        recCache.put(clientId,v);
         return true;
     }
 
@@ -147,9 +141,11 @@ public class MemSessionStore extends AbstractMemStore implements SessionStore {
         ConcurrentHashMap<Integer,Message> v =  sendCache.get(clientId);
         if(v == null){
             v = new ConcurrentHashMap<>(16);
+            v.put(message.getMsgId(),message);
+            sendCache.put(clientId,v);
+        }else{
+            v.put(message.getMsgId(),message);
         }
-        v.put(message.getMsgId(),message);
-        sendCache.put(clientId,v);
         return true;
     }
 
@@ -175,10 +171,12 @@ public class MemSessionStore extends AbstractMemStore implements SessionStore {
     public boolean cacheOutflowSecMsgId(String clientId, int msgId) {
         ConcurrentHashMap<Integer,Object> v =  secTwoCache.get(clientId);
         if(v == null){
-            v = new ConcurrentHashMap<>(16);
+            v = new ConcurrentHashMap<>();
+            v.put(msgId,o);
+            secTwoCache.put(clientId,v);
+        }else {
+            v.put(msgId,o);
         }
-        v.put(msgId,o);
-        secTwoCache.put(clientId,v);
         return true;
     }
 
@@ -210,9 +208,11 @@ public class MemSessionStore extends AbstractMemStore implements SessionStore {
         BlockingQueue<Message> off = offlineTable.get(clientId);
         if(off == null){
             off = new LinkedBlockingQueue<>();
+            off.add(message);
+            offlineTable.put(clientId,off);
+        }else {
+            off.add(message);
         }
-        off.add(message);
-        offlineTable.put(clientId,off);
         return true;
     }
 
